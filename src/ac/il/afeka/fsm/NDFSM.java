@@ -305,7 +305,80 @@ public class NDFSM {
 		return toDFSM().compute(input);
 	}
 	
-	public DFSM toDFSM() {
-		return null;
-	}
+	public DFSM toDFSM()
+    throws Exception
+  {
+    int i = 1;
+    boolean acceptingState = false;
+    Set<State> initialStates = eps(initialState);
+    Set<State> acceptingStates = new HashSet();
+    List<Set<State>> activeStates = new LinkedList();
+    Set<Transition> newTransitions = new HashSet();
+    Set<State> allStates = new HashSet();
+    Map<Set<State>, IdentifiedState> map = new HashMap();
+    activeStates.add(initialStates);
+    
+    map.put(initialStates, new IdentifiedState(Integer.valueOf(0)));
+    while (!activeStates.isEmpty())
+    {
+      for (Character c : alphabet)
+      {
+        Set<State> newState = new HashSet();
+        Set<State> activeState = new HashSet();
+        for (State s : (Set)activeStates.get(0))
+        {
+          if ((!acceptingState) && 
+            (this.acceptingStates.contains(s))) {
+            acceptingState = true;
+          }
+          activeState = transitions.at(s, c);
+          if (!activeState.isEmpty())
+          {
+            newState.addAll(activeState);
+            for (State st : activeState) {
+              newState.addAll(eps(st));
+            }
+          }
+        }
+        if (!map.containsKey(newState))
+        {
+          activeStates.add(newState);
+          map.put(newState, new IdentifiedState(Integer.valueOf(i)));
+          i++;
+        }
+        if (acceptingState) {
+          acceptingStates.add((State)map.get(activeStates.get(0)));
+        }
+        acceptingState = false;
+        newTransitions.add(new Transition((State)map.get(activeStates.get(0)), c, (State)map.get(newState)));
+      }
+      activeStates.remove(0);
+    }
+    allStates.addAll(map.values());
+    
+    return new DFSM(allStates, alphabet, newTransitions, (State)map.get(initialStates), acceptingStates);
+  }
+  
+  private Set<State> eps(State theState)
+  {
+    Set<State> reachable = new HashSet();
+    
+    Set<State> newlyReachable = new HashSet();
+    
+    newlyReachable.add(theState);
+    Iterator localIterator1;
+    for (; !newlyReachable.isEmpty(); localIterator1.hasNext())
+    {
+      reachable.addAll(newlyReachable);
+      newlyReachable = new HashSet();
+      localIterator1 = reachable.iterator(); continue;State state = (State)localIterator1.next();
+      for (State s : transitions.at(state, Alphabet.EPSILON)) {
+        if (!reachable.contains(s)) {
+          newlyReachable.add(s);
+        }
+      }
+    }
+    return reachable;
+  }
+}
 }
