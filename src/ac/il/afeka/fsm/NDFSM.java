@@ -1,8 +1,10 @@
 package ac.il.afeka.fsm;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -16,37 +18,41 @@ public class NDFSM {
 	protected Set<State> acceptingStates;
 	protected State initialState;
 	protected Alphabet alphabet;
-	
+
 	/**
-	 * Builds a NDFSM from a string representation (encoding) 
-	 *  
-	 * @param encoding	the string representation of a NDFSM
-	 * @throws Exception if the encoding is incorrect or if the transitions contain invalid states or symbols
+	 * Builds a NDFSM from a string representation (encoding)
+	 * 
+	 * @param encoding the string representation of a NDFSM
+	 * @throws Exception if the encoding is incorrect or if the transitions contain
+	 *                   invalid states or symbols
 	 */
 	public NDFSM(String encoding) throws Exception {
 		parse(encoding);
-		
-		transitions.verify(states,alphabet);
+
+		transitions.verify(states, alphabet);
 	}
-	
+
 	/**
 	 * Build a NDFSM from its components
 	 * 
-	 * @param states			the set of states for this machine
-	 * @param alphabet			this machine's alphabet
-	 * @param transitions		the transition mapping of this machine
-	 * @param initialState		the initial state (must be a member of states)
-	 * @param acceptingStates	the set of accepting states (must be a subset of states)
-	 * @throws Exception if the components do not represent a valid non deterministic machine
+	 * @param states          the set of states for this machine
+	 * @param alphabet        this machine's alphabet
+	 * @param transitions     the transition mapping of this machine
+	 * @param initialState    the initial state (must be a member of states)
+	 * @param acceptingStates the set of accepting states (must be a subset of
+	 *                        states)
+	 * @throws Exception if the components do not represent a valid non
+	 *                   deterministic machine
 	 */
 	public NDFSM(Set<State> states, Alphabet alphabet, Set<Transition> transitions, State initialState,
 			Set<State> acceptingStates) throws Exception {
-		
+
 		initializeFrom(states, alphabet, transitions, initialState, acceptingStates);
-		this.transitions.verify(this.states,alphabet);
+		this.transitions.verify(this.states, alphabet);
 	}
 
-	protected void initializeFrom(Set<State> states, Alphabet alphabet, Set<Transition> transitions, State initialState, Set<State> acceptingStates) {
+	protected void initializeFrom(Set<State> states, Alphabet alphabet, Set<Transition> transitions, State initialState,
+			Set<State> acceptingStates) {
 
 		this.states = states;
 		this.alphabet = alphabet;
@@ -55,34 +61,44 @@ public class NDFSM {
 		this.acceptingStates = acceptingStates;
 	}
 
-	protected NDFSM() { }
-	
-	/** Overrides this machine with the machine encoded in string.
+	protected NDFSM() {
+	}
+
+	/**
+	 * Overrides this machine with the machine encoded in string.
 	 * 
-	 *  <p>Here's an example of the encoding:</p>
-	 <pre>
+	 * <p>
+	 * Here's an example of the encoding:
+	 * </p>
+	 * 
+	 * <pre>
 	0 1/a b/0 , a , 0; 0,b, 1 ;1, a, 0 ; 1, b, 1/0/ 1
-	</pre>
-	<p>This is the encoding of a finite state machine with two states (identified as 0 and 1), 
-	an alphabet that consists of the two characters 'a' and 'b', and four transitions:</p>
-	<ol>
-	<li>From state 0 on character a it moves to state 0</li>
-	<li>from state 0 on character b it moves to state 1,</li>
-	<li>from state 1 on character a it moves to state 0,</li>
-	<li>from state 1 on character b it moves to state 1.</li>
-	</ol>
-	<p>The initial state of this machine is 0, and the set of accepting states consists of 
-	just one state 1. Here is the format in general:</p>
-	  
-	 <pre>
+	 * </pre>
+	 * <p>
+	 * This is the encoding of a finite state machine with two states (identified as
+	 * 0 and 1), an alphabet that consists of the two characters 'a' and 'b', and
+	 * four transitions:
+	 * </p>
+	 * <ol>
+	 * <li>From state 0 on character a it moves to state 0</li>
+	 * <li>from state 0 on character b it moves to state 1,</li>
+	 * <li>from state 1 on character a it moves to state 0,</li>
+	 * <li>from state 1 on character b it moves to state 1.</li>
+	 * </ol>
+	 * <p>
+	 * The initial state of this machine is 0, and the set of accepting states
+	 * consists of just one state 1. Here is the format in general:
+	 * </p>
+	 * 
+	 * <pre>
 	 {@code
 	<states> / <alphabet> / <transitions> / <initial state> / <accepting states>
 	}
-	</pre>
-	
-	where:
-	
-	<pre>
+	 * </pre>
+	 * 
+	 * where:
+	 * 
+	 * <pre>
 	{@code
 	<alphabet> is <char> <char> ...
 	
@@ -96,42 +112,42 @@ public class NDFSM {
 	
 	<state> is an integer
 	}
-	</pre>
-	
-	@param string the string encoding 
-	@throws Exception if the string encoding is invalid
-	*/
+	 * </pre>
+	 * 
+	 * @param string the string encoding
+	 * @throws Exception if the string encoding is invalid
+	 */
 	public void parse(String string) throws Exception {
-		
+
 		Scanner scanner = new Scanner(string);
-		
-		scanner.useDelimiter("\\s*/");	
-		
+
+		scanner.useDelimiter("\\s*/");
+
 		Map<Integer, State> states = new HashMap<Integer, State>();
-		
-		for(Integer stateId : IdentifiedState.parseStateIdList(scanner.next())) {
+
+		for (Integer stateId : IdentifiedState.parseStateIdList(scanner.next())) {
 			states.put(stateId, new IdentifiedState(stateId));
 		}
 
 		Alphabet alphabet = Alphabet.parse(scanner.next());
-		
+
 		Set<Transition> transitions = new HashSet<Transition>();
-		
-		for (TransitionTuple t: TransitionTuple.parseTupleList(scanner.next())) {
+
+		for (TransitionTuple t : TransitionTuple.parseTupleList(scanner.next())) {
 			transitions.add(new Transition(states.get(t.fromStateId()), t.symbol(), states.get(t.toStateId())));
 		}
-		
+
 		State initialState = states.get(scanner.nextInt());
-		
+
 		Set<State> acceptingStates = new HashSet<State>();
 
 		if (scanner.hasNext())
-			for(Integer stateId : IdentifiedState.parseStateIdList(scanner.next())) {
+			for (Integer stateId : IdentifiedState.parseStateIdList(scanner.next())) {
 				acceptingStates.add(states.get(stateId));
 			}
-		
+
 		scanner.close();
-		
+
 		initializeFrom(new HashSet<State>(states.values()), alphabet, transitions, initialState, acceptingStates);
 		this.transitions.verify(this.states, alphabet);
 	}
@@ -139,32 +155,36 @@ public class NDFSM {
 	protected TransitionMapping createMapping(Set<Transition> transitions) {
 		return new TransitionRelation(transitions);
 	}
-		
-	/** Returns a version of this state machine with all the unreachable states removed.
+
+	/**
+	 * Returns a version of this state machine with all the unreachable states
+	 * removed.
 	 * 
-	 * @return NDFSM that recognizes the same language as this machine, but has no unreachable states.
+	 * @return NDFSM that recognizes the same language as this machine, but has no
+	 *         unreachable states.
 	 */
 	public NDFSM removeUnreachableStates() {
 
 		Set<State> reachableStates = reachableStates();
 
 		Set<Transition> transitionsToReachableStates = new HashSet<Transition>();
-		
-		for(Transition t : transitions.transitions()) {
+
+		for (Transition t : transitions.transitions()) {
 			if (reachableStates.contains(t.fromState()) && reachableStates.contains(t.toState()))
 				transitionsToReachableStates.add(t);
 		}
-		
+
 		Set<State> reachableAcceptingStates = new HashSet<State>();
-		for(State s : acceptingStates) {
+		for (State s : acceptingStates) {
 			if (reachableStates.contains(s))
 				reachableAcceptingStates.add(s);
 		}
-		
-		NDFSM aNDFSM = (NDFSM)create();
-		
-		aNDFSM.initializeFrom(reachableStates, alphabet, transitionsToReachableStates, initialState, reachableAcceptingStates);
-		
+
+		NDFSM aNDFSM = (NDFSM) create();
+
+		aNDFSM.initializeFrom(reachableStates, alphabet, transitionsToReachableStates, initialState,
+				reachableAcceptingStates);
+
 		return aNDFSM;
 	}
 
@@ -173,57 +193,59 @@ public class NDFSM {
 	}
 
 	// returns a set of all states that are reachable from the initial state
-	
+
 	private Set<State> reachableStates() {
-		
+
 		List<Character> symbols = new ArrayList<Character>();
-		
+
 		symbols.add(Alphabet.EPSILON);
-		
-		for(Character c : alphabet) {
+
+		for (Character c : alphabet) {
 			symbols.add(c);
 		}
-		
+
 		Alphabet alphabetWithEpsilon = new Alphabet(symbols);
-		
+
 		Set<State> reachable = new HashSet<State>();
 
 		Set<State> newlyReachable = new HashSet<State>();
 
 		newlyReachable.add(initialState);
 
-		while(!newlyReachable.isEmpty()) {
+		while (!newlyReachable.isEmpty()) {
 			reachable.addAll(newlyReachable);
 			newlyReachable = new HashSet<State>();
-			for(State state : reachable) {
-				for(Character symbol : alphabetWithEpsilon) {
-					for(State s : transitions.at(state, symbol)) {
+			for (State state : reachable) {
+				for (Character symbol : alphabetWithEpsilon) {
+					for (State s : transitions.at(state, symbol)) {
 						if (!reachable.contains(s))
 							newlyReachable.add(s);
 					}
 				}
 			}
 		}
-		
+
 		return reachable;
 	}
 
-	/** Encodes this state machine as a string
+	/**
+	 * Encodes this state machine as a string
 	 * 
 	 * @return the string encoding of this state machine
 	 */
 	public String encode() {
-		return  State.encodeStateSet(states) + "/" +
-				alphabet.encode() + "/" + 
-				transitions.encode() + "/" + 
-				initialState.encode() + "/" +
-				State.encodeStateSet(acceptingStates);
+		return State.encodeStateSet(states) + "/" + alphabet.encode() + "/" + transitions.encode() + "/"
+				+ initialState.encode() + "/" + State.encodeStateSet(acceptingStates);
 	}
-	
-	/** Prints a set notation description of this machine.
+
+	/**
+	 * Prints a set notation description of this machine.
 	 * 
-	 * <p>To see the Greek symbols on the console in Eclipse, go to Window -&gt; Preferences -&gt; General -&gt; Workspace 
-	 * and change <tt>Text file encoding</tt> to <tt>UTF-8</tt>.</p>
+	 * <p>
+	 * To see the Greek symbols on the console in Eclipse, go to Window -&gt;
+	 * Preferences -&gt; General -&gt; Workspace and change
+	 * <tt>Text file encoding</tt> to <tt>UTF-8</tt>.
+	 * </p>
 	 * 
 	 * @param out the output stream on which the description is printed.
 	 */
@@ -231,154 +253,149 @@ public class NDFSM {
 		out.print("K = ");
 		State.prettyPrintStateSet(states, out);
 		out.println("");
-		
+
 		out.print("\u03A3 = ");
 		alphabet.prettyPrint(out);
 		out.println("");
-		
+
 		out.print(transitions.prettyName() + " = ");
 		transitions.prettyPrint(out);
 		out.println("");
-		
+
 		out.print("s = ");
 		initialState.prettyPrint(out);
 		out.println("");
-		
+
 		out.print("A = ");
 		State.prettyPrintStateSet(acceptingStates, out);
-		out.println("");		
+		out.println("");
 	}
-	
-	/** Returns a canonic version of this machine. 
 
-<p>The canonic encoding of two minimal state machines that recognize the same language is identical.</p>
-
-@return a canonic version of this machine. 
-*/
+	/**
+	 * Returns a canonic version of this machine.
+	 * 
+	 * <p>
+	 * The canonic encoding of two minimal state machines that recognize the same
+	 * language is identical.
+	 * </p>
+	 * 
+	 * @return a canonic version of this machine.
+	 */
 
 	public NDFSM toCanonicForm() {
-	
+
 		Set<Character> alphabetAndEpsilon = new HashSet<Character>();
-		
-		for(Character symbol : alphabet) {
+
+		for (Character symbol : alphabet) {
 			alphabetAndEpsilon.add(symbol);
 		}
 		alphabetAndEpsilon.add(Alphabet.EPSILON);
-		
+
 		Set<Transition> canonicTransitions = new HashSet<Transition>();
 		Stack<State> todo = new Stack<State>();
 		Map<State, State> canonicStates = new HashMap<State, State>();
 		Integer free = 0;
-		
+
 		todo.push(initialState);
 		canonicStates.put(initialState, new IdentifiedState(free));
 		free++;
-		
+
 		while (!todo.isEmpty()) {
 			State top = todo.pop();
-			for(Character symbol : alphabetAndEpsilon) {
-				for(State nextState : transitions.at(top, symbol)) {
+			for (Character symbol : alphabetAndEpsilon) {
+				for (State nextState : transitions.at(top, symbol)) {
 					if (!canonicStates.containsKey(nextState)) {
 						canonicStates.put(nextState, new IdentifiedState(free));
 						todo.push(nextState);
 						free++;
 					}
-					canonicTransitions.add(new Transition(canonicStates.get(top), symbol, canonicStates.get(nextState)));
+					canonicTransitions
+							.add(new Transition(canonicStates.get(top), symbol, canonicStates.get(nextState)));
 				}
-			}			
+			}
 		}
 
 		Set<State> canonicAcceptingStates = new HashSet<State>();
-		for(State s : acceptingStates) {
-			if (canonicStates.containsKey(s)) // unreachable accepting states will not appear in the canonic form of the state machine
+		for (State s : acceptingStates) {
+			if (canonicStates.containsKey(s)) // unreachable accepting states will not appear in the canonic form of the
+												// state machine
 				canonicAcceptingStates.add(canonicStates.get(s));
 		}
-		
+
 		NDFSM aNDFSM = create();
-		
-		aNDFSM.initializeFrom(new HashSet<State>(canonicStates.values()), alphabet, canonicTransitions, canonicStates.get(initialState), canonicAcceptingStates);
+
+		aNDFSM.initializeFrom(new HashSet<State>(canonicStates.values()), alphabet, canonicTransitions,
+				canonicStates.get(initialState), canonicAcceptingStates);
 
 		return aNDFSM;
 	}
-	
-	public boolean compute(String input) {
+
+	public boolean compute(String input) throws Exception {
 		return toDFSM().compute(input);
 	}
-	
-	public DFSM toDFSM()
-    throws Exception
-  {
-    int i = 1;
-    boolean acceptingState = false;
-    Set<State> initialStates = eps(initialState);
-    Set<State> acceptingStates = new HashSet();
-    List<Set<State>> activeStates = new LinkedList();
-    Set<Transition> newTransitions = new HashSet();
-    Set<State> allStates = new HashSet();
-    Map<Set<State>, IdentifiedState> map = new HashMap();
-    activeStates.add(initialStates);
-    
-    map.put(initialStates, new IdentifiedState(Integer.valueOf(0)));
-    while (!activeStates.isEmpty())
-    {
-      for (Character c : alphabet)
-      {
-        Set<State> newState = new HashSet();
-        Set<State> activeState = new HashSet();
-        for (State s : (Set)activeStates.get(0))
-        {
-          if ((!acceptingState) && 
-            (this.acceptingStates.contains(s))) {
-            acceptingState = true;
-          }
-          activeState = transitions.at(s, c);
-          if (!activeState.isEmpty())
-          {
-            newState.addAll(activeState);
-            for (State st : activeState) {
-              newState.addAll(eps(st));
-            }
-          }
-        }
-        if (!map.containsKey(newState))
-        {
-          activeStates.add(newState);
-          map.put(newState, new IdentifiedState(Integer.valueOf(i)));
-          i++;
-        }
-        if (acceptingState) {
-          acceptingStates.add((State)map.get(activeStates.get(0)));
-        }
-        acceptingState = false;
-        newTransitions.add(new Transition((State)map.get(activeStates.get(0)), c, (State)map.get(newState)));
-      }
-      activeStates.remove(0);
-    }
-    allStates.addAll(map.values());
-    
-    return new DFSM(allStates, alphabet, newTransitions, (State)map.get(initialStates), acceptingStates);
-  }
-  
-  private Set<State> eps(State theState)
-  {
-    Set<State> reachable = new HashSet();
-    
-    Set<State> newlyReachable = new HashSet();
-    
-    newlyReachable.add(theState);
-    Iterator localIterator1;
-    for (; !newlyReachable.isEmpty(); localIterator1.hasNext())
-    {
-      reachable.addAll(newlyReachable);
-      newlyReachable = new HashSet();
-      localIterator1 = reachable.iterator(); continue;State state = (State)localIterator1.next();
-      for (State s : transitions.at(state, Alphabet.EPSILON)) {
-        if (!reachable.contains(s)) {
-          newlyReachable.add(s);
-        }
-      }
-    }
-    return reachable;
-  }
-}
+
+	public DFSM toDFSM() throws Exception {
+		int i = 1;
+		boolean acceptingState = false;
+		Set<State> initialStates = eps(initialState);
+		Set<State> acceptingStates = new HashSet<>();
+		List<Set<State>> activeStates = new LinkedList<>();
+		Set<Transition> newTransitions = new HashSet<>();
+		Set<State> allStates = new HashSet<>();
+		Map<Set<State>, IdentifiedState> map = new HashMap<>();
+		activeStates.add(initialStates);
+
+		map.put(initialStates, new IdentifiedState(Integer.valueOf(0)));
+		while (!activeStates.isEmpty()) {
+			for (Character c : alphabet) {
+				Set<State> newState = new HashSet<>();
+				Set<State> activeState = new HashSet<>();
+				for (State s : activeStates.get(0)) {
+					if ((!acceptingState) && (this.acceptingStates.contains(s))) {
+						acceptingState = true;
+					}
+					activeState = transitions.at(s, c);
+					if (!activeState.isEmpty()) {
+						newState.addAll(activeState);
+						for (State st : activeState) {
+							newState.addAll(eps(st));
+						}
+					}
+				}
+				if (!map.containsKey(newState)) {
+					activeStates.add(newState);
+					map.put(newState, new IdentifiedState(Integer.valueOf(i)));
+					i++;
+				}
+				if (acceptingState) {
+					acceptingStates.add((State) map.get(activeStates.get(0)));
+				}
+				acceptingState = false;
+				newTransitions.add(new Transition((State) map.get(activeStates.get(0)), c, (State) map.get(newState)));
+			}
+			activeStates.remove(0);
+		}
+		allStates.addAll(map.values());
+
+		return new DFSM(allStates, alphabet, newTransitions, (State) map.get(initialStates), acceptingStates);
+	}
+
+	private Set<State> eps(State theState) {
+      //  TransitionRelation tr = new TransitionRelation(transitions.transitions());
+		Set<State> eps = new HashSet<>();
+		Set<State> reachable = new HashSet<>();
+		
+		reachable.add(theState);
+			
+		for(State s: reachable) {
+			eps.addAll(reachable);
+			reachable = new HashSet<>();
+			for (State e : transitions.at(s, Alphabet.EPSILON)) {
+				if (!eps.contains(e)) {
+					reachable.add(e);
+				}
+			}
+		}
+		return eps;
+	}
 }
